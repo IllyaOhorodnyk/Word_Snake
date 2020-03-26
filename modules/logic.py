@@ -1,9 +1,11 @@
 # організувати фнцію для випадкового вибору незанятих клітинок
 # механізм для статусу загаданого слова
 from abc import ABC, abstractmethod, abstractproperty
+import pygame
 
-
-class Block(ABC):
+class Block(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init(self)
     # size
     height = 0
     weight = 0
@@ -100,6 +102,13 @@ class Table:
         # bla = self.board[0][0]
         # return bla
         pass
+
+class Snake(pygame.sprite.Group):
+    def __init__(self):
+        super().__init__(self)
+
+    def turn(self, key):
+        print(key)
 
 
 if __name__ == "__main__":
