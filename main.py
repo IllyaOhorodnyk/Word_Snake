@@ -3,6 +3,8 @@ import sys
 import math
 import json
 
+import pygame
+
 
 def main():
     pass
