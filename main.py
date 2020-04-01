@@ -4,15 +4,14 @@ import math
 import json
 
 import pygame
-from pygame import K_UP, K_DOWN, K_LEFT, K_RIGHT, QUIT, KEYDOWN
+from pygame import (K_UP, K_DOWN, K_LEFT,
+                    K_RIGHT, QUIT, KEYDOWN)
 
-from modules.logic import Snake
-import modules.frame
+from modules.frame import Snake
 
 ###### CONSTANTS ######
-BLOCK_SIZE = [50, 50]
-DISPLAY_SIZE = [500, 500]
-BLACK = (0, 0, 0)
+from modules.constants import (BLOCK_SIZE, DISPLAY_SIZE, RED,
+                               GREEN, BLUE, BLACK, WHITE)
 
 #Pygame initialization
 pygame.init()
@@ -20,6 +19,7 @@ screen = pygame.display.set_mode(DISPLAY_SIZE)
 snake = Snake()
 
 def main():
+    clock = pygame.time.Clock()
     while True:
         # Main loop
         for e in pygame.event.get():
@@ -34,7 +34,10 @@ def main():
             if e.type == KEYDOWN and e.key == K_RIGHT:
                 snake.turn(e.key)
 
-        screen.fill(BLACK)
+        clock.tick(4)
+        screen.fill(WHITE)
+        snake.update()
+        snake.draw(screen)
         pygame.display.flip()
 
 
