@@ -5,39 +5,42 @@ import json
 
 import pygame
 from pygame import (K_UP, K_DOWN, K_LEFT,
-                    K_RIGHT, QUIT, KEYDOWN)
+                    K_RIGHT, QUIT, KEYDOWN, K_ESCAPE)
 
-from modules.frame import Snake
+from modules.frame import World
 
 ###### CONSTANTS ######
 from modules.constants import (BLOCK_SIZE, DISPLAY_SIZE, RED,
                                GREEN, BLUE, BLACK, WHITE)
 
 #Pygame initialization
-pygame.init()
-screen = pygame.display.set_mode(DISPLAY_SIZE)
-snake = Snake()
+
 
 def main():
+    pygame.init()
+    #screen = pygame.display.set_mode(DISPLAY_SIZE, flags=pygame.FULLSCREEN)
+    screen = pygame.display.set_mode(DISPLAY_SIZE)
     clock = pygame.time.Clock()
+    world = World()
+    
     while True:
         # Main loop
         for e in pygame.event.get():
-            if e.type == QUIT:
+            if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
                 sys.exit()
             if e.type == KEYDOWN and e.key == K_UP:
-                snake.turn(e.key)
+                world.snake.turn(e.key)
             if e.type == KEYDOWN and e.key == K_DOWN:
-                snake.turn(e.key)
+                world.snake.turn(e.key)
             if e.type == KEYDOWN and e.key == K_LEFT:
-                snake.turn(e.key)
+                world.snake.turn(e.key)
             if e.type == KEYDOWN and e.key == K_RIGHT:
-                snake.turn(e.key)
+                world.snake.turn(e.key)
 
         clock.tick(4)
         screen.fill(WHITE)
-        snake.update()
-        snake.draw(screen)
+        world.update()
+        world.draw(screen)
         pygame.display.flip()
 
 

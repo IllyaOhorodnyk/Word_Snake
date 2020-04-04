@@ -5,69 +5,54 @@ import pygame
 from pygame.sprite import Sprite, Group, GroupSingle
 
 from .constants import BLOCK_SIZE, GREEN, RED, BLACK, BLUE
+from .logic import get_free_cell
 from pygame import (K_UP, K_DOWN, K_LEFT,
                     K_RIGHT, QUIT, KEYDOWN)
 
-class Entities(Group):
+
+class World():
     def __init__(self):
         super().__init__()
+        self.groups = [
+                        Snake(self),
+                        Foods(self),
+                        Enemies(self)
+                        ]
 
+        self.snake = self.groups[0]
 
-class Block(Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.Surface(BLOCK_SIZE)
-        self.rect = self.image.get_rect()
-        self.rect.center = -100, -100
+    def update(self):
+        [group.update() for group in self.groups]
+        
+        sprites =  list()
+        [sprites.extend(group.sprites()) for group in self.groups]
+        self.positions = [sprite.rect.topleft for sprite in sprites]
 
-class Chunk(Block):
-    def __init__(self):
-        super().__init__()
-
-
-class Wall(Block):
-    def __init__(self):
-        super().__init__()
-        self.image.fill(BLACK)
-
-
-class Food(Block):
-    def __init__(self):
-        super().__init__()
-        self.image.fill(GREEN)
-
-
-class Head(Chunk):
-    def __init__(self):
-        super().__init__()
-        self.image.fill(RED)
-
-
-class Tail(Chunk):
-    def __init__(self):
-        super().__init__()
-        self.image.fill(BLUE)
+    def draw(self, screen):
+        [group.draw(screen) for group in self.groups]
 
 
 class Foods(GroupSingle):
-    def __init__(self):
+    def __init__(self, world):
         super().__init__()
+        self.world = world
+        self.add(Food((300, 300)))
 
-        
 
 class Enemies(Group):
-    def __init__(self):
+    def __init__(self, world):
         super().__init__()
+        self.world = world
 
 
 class Snake(Group):
-    def __init__(self):
+    def __init__(self, world):
         super().__init__()
-
+        self.world = world
         self.__direction = 0
         self.__turn_pool = list()
         self.head = Head()
-        self.head.rect.center = (225, 225)
+        self.head.rect.topleft = (0, 0)
         self.add(self.head)
         self.growth(3)
         
@@ -86,7 +71,6 @@ class Snake(Group):
         for each in range(lenght):
             tail = Tail()
             self.add(tail)
-        
 
     def turn(self, key):
         if self.__direction != math.pi and key == K_UP:
@@ -107,8 +91,47 @@ class Snake(Group):
                                             (BLOCK_SIZE[1]) * \
                                             math.cos(direction) )
         # Calculate first placeholder for head only
-        placeholder = placeholder.center
+        placeholder = placeholder.topleft
         # Update the Body
         sprites = self.sprites()
         for i in range(len(sprites)): # A = B B = T T = A
-            sprites[i].rect.center, placeholder = placeholder, sprites[i].rect.center
+            sprites[i].rect.topleft, placeholder = placeholder, sprites[i].rect.topleft
+
+
+class Block(Sprite):
+    def __init__(self, pos=(-100, -100)):
+        super().__init__()
+        self.image = pygame.Surface(BLOCK_SIZE)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = pos
+
+
+class Chunk(Block):
+    def __init__(self):
+        super().__init__()
+
+
+class Wall(Block):
+    def __init__(self, pos):
+        super().__init__(pos)
+        self.image.fill(BLACK)
+
+
+class Food(Block):
+    def __init__(self, pos):
+        super().__init__(pos)
+        self.image.fill(GREEN)
+
+
+class Head(Chunk):
+    def __init__(self):
+        super().__init__()
+        self.image.fill(RED)
+
+
+class Tail(Chunk):
+    def __init__(self):
+        super().__init__()
+        self.image.fill(BLUE)
+
+
