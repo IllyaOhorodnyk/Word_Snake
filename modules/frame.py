@@ -1,11 +1,13 @@
 # організувати фнцію для випадкового вибору незанятих клітинок
 # механізм для статусу загаданого слова
 import math
+import random
 import pygame
+import sys
+import json
 from pygame.sprite import Sprite, Group, GroupSingle
 
-from .constants import BLOCK_SIZE, GREEN, RED, BLACK, BLUE
-from .logic import get_free_cell
+from .constants import DISPLAY_SIZE, BLOCK_SIZE, GREEN, RED, BLACK, BLUE
 from pygame import (K_UP, K_DOWN, K_LEFT,
                     K_RIGHT, QUIT, KEYDOWN)
 
@@ -13,36 +15,78 @@ from pygame import (K_UP, K_DOWN, K_LEFT,
 class World():
     def __init__(self):
         super().__init__()
-        self.groups = [
-                        Snake(self),
-                        Foods(self),
-                        Enemies(self)
-                        ]
+        self.all_positions = set()
+        for x in range(0, DISPLAY_SIZE[0], BLOCK_SIZE[0]):
+            for y in range(0, DISPLAY_SIZE[1], BLOCK_SIZE[1]):
+                self.all_positions.add((x, y))
 
-        self.snake = self.groups[0]
+        self.word = Word("words.json")
+        
+        self.font = pygame.font.SysFont(None, 28)
+
+        self.groups = list()
+
+        self.groups.append(Enemies(self))
+        self.enemies = self.groups[0]
+
+        self.groups.append(Foods(self))
+        self.foods = self.groups[1]
+
+        self.groups.append(Snake(self))
+        self.snake = self.groups[2]
 
     def update(self):
         [group.update() for group in self.groups]
+
+        if self.snake.head.rect.topleft == self.foods.food.rect.topleft:
+            self.snake.growth()
+            self.foods.repoint()
         
-        sprites =  list()
-        [sprites.extend(group.sprites()) for group in self.groups]
-        self.positions = [sprite.rect.topleft for sprite in sprites]
+        if self.snake.head.rect.topleft in \
+                [each.rect.topleft for each in self.enemies.sprites()]:
+            print("Game Over!")
+            sys.exit(0)
 
     def draw(self, screen):
         [group.draw(screen) for group in self.groups]
 
+    def get_free_cell(self):
+        sprites =  list()
+        [sprites.extend(group.sprites()) for group in self.groups]
+        positions = set((sprite.rect.topleft for sprite in sprites))
+
+        return random.choice(list(self.all_positions - positions))
+
+
+class Word:
+    def __init__(self, filename):
+        try:
+            file = open(filename)
+            words = json.loads(file.read())
+            file.close()
+        except FileNotFoundError as e:
+            print("File not found by the name ", filename)
+        
+        self.word = random.choice(list(words.keys()))
+        self.question = words[self.word]
 
 class Foods(GroupSingle):
     def __init__(self, world):
         super().__init__()
         self.world = world
-        self.add(Food((300, 300)))
+        self.food = Food(self.world.get_free_cell())
+        self.add(self.food)
+
+    def repoint(self):
+        self.food.rect.topleft = self.world.get_free_cell()
 
 
 class Enemies(Group):
     def __init__(self, world):
         super().__init__()
         self.world = world
+        for i in range(5):
+            self.add(Wall(self.world.get_free_cell()))
 
 
 class Snake(Group):
@@ -71,6 +115,7 @@ class Snake(Group):
         for each in range(lenght):
             tail = Tail()
             self.add(tail)
+            self.world.enemies.add(tail)
 
     def turn(self, key):
         if self.__direction != math.pi and key == K_UP:
@@ -134,4 +179,7 @@ class Tail(Chunk):
         super().__init__()
         self.image.fill(BLUE)
 
-
+    def put_char(self, char):
+        font = pygame.font.SysFont(None, 28)
+        surf = font.render(char, True, (0, 0, 0))
+        self.image.blit(surf, (0, 0))
