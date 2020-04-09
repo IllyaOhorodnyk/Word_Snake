@@ -1,6 +1,7 @@
 # організувати фнцію для випадкового вибору незанятих клітинок
 # механізм для статусу загаданого слова
 import math
+import pdb
 import random
 import pygame
 import sys
@@ -21,8 +22,12 @@ class World():
                 self.all_positions.add((x, y))
 
         self.word = Word("words.json")
-        
-        self.font = pygame.font.SysFont(None, 28)
+
+        surf = pygame.font.Font("miroslav.ttf", 28).render(self.word, True, BLACK)
+        sprite = pygame.sprite.Sprite()
+        sprite.image = surf
+        sprite.rect = surf.get_rect()
+        sprite.rect.topleft = (0, 0)
 
         self.groups = list()
 
@@ -34,6 +39,8 @@ class World():
 
         self.groups.append(Snake(self))
         self.snake = self.groups[2]
+
+        self.groups.append(pygame.sprite.GroupSingle(sprite))
 
     def update(self):
         [group.update() for group in self.groups]
@@ -67,8 +74,12 @@ class Word:
         except FileNotFoundError as e:
             print("File not found by the name ", filename)
         
-        self.word = random.choice(list(words.keys()))
-        self.question = words[self.word]
+        self.__word = random.choice(list(words.keys()))
+        self.question = words[self.__word]
+
+    def __repr__(self):
+        return self.__word
+
 
 class Foods(GroupSingle):
     def __init__(self, world):
@@ -182,4 +193,6 @@ class Tail(Chunk):
     def put_char(self, char):
         font = pygame.font.SysFont(None, 28)
         surf = font.render(char, True, (0, 0, 0))
-        self.image.blit(surf, (0, 0))
+        rect = surf.get_rect()
+        rect.topleft = (0, 0)
+        self.image.blit(surf, rect)
