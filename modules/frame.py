@@ -21,13 +21,16 @@ class World():
             for y in range(0, DISPLAY_SIZE[1], BLOCK_SIZE[1]):
                 self.all_positions.add((x, y))
 
-        self.word = Word("words.json")
-
-        surf = pygame.font.Font("miroslav.ttf", 28).render(self.word, True, BLACK)
+        self.word = choose_word("words.json")
+        
+        self.font = pygame.font.Font("miroslav.ttf", 28)
+        surf = self.font.render(self.word[1], True, BLACK)
         sprite = pygame.sprite.Sprite()
         sprite.image = surf
         sprite.rect = surf.get_rect()
-        sprite.rect.topleft = (0, 0)
+        sprite.rect.topleft = BLOCK_SIZE
+
+        self.length = 3
 
         self.groups = list()
 
@@ -65,30 +68,21 @@ class World():
         return random.choice(list(self.all_positions - positions))
 
 
-class Word:
-    def __init__(self, filename):
-        try:
-            file = open(filename)
-            words = json.loads(file.read())
-            file.close()
-        except FileNotFoundError as e:
-            print("File not found by the name ", filename)
-        
-        self.__word = random.choice(list(words.keys()))
-        self.question = words[self.__word]
-
-    def __repr__(self):
-        return self.__word
-
-
 class Foods(GroupSingle):
     def __init__(self, world):
         super().__init__()
         self.world = world
         self.food = Food(self.world.get_free_cell())
+        surf = self.world.font.render(\
+                self.world.word[0][self.world.length], True, BLACK)
+        self.food.image.blit(surf, (0, 0))
         self.add(self.food)
 
     def repoint(self):
+        self.food.image.fill(GREEN)
+        surf = self.world.font.render(\
+                self.world.word[0][len(self.world.snake)-1], True, BLACK)
+        self.food.image.blit(surf, (0, 0))
         self.food.rect.topleft = self.world.get_free_cell()
 
 
@@ -96,9 +90,14 @@ class Enemies(Group):
     def __init__(self, world):
         super().__init__()
         self.world = world
-        for i in range(5):
-            self.add(Wall(self.world.get_free_cell()))
+        for i in range(0, DISPLAY_SIZE[0], BLOCK_SIZE[0]):
+            self.add(Wall((0, i)))
+            self.add(Wall((i, 0)))
+            self.add(Wall((i, DISPLAY_SIZE[0]-BLOCK_SIZE[0])))
+            self.add(Wall((DISPLAY_SIZE[1]-BLOCK_SIZE[1], i)))
 
+        for i in range(self.world.length):
+            self.add(Poison(self.world.get_free_cell()))
 
 class Snake(Group):
     def __init__(self, world):
@@ -107,9 +106,9 @@ class Snake(Group):
         self.__direction = 0
         self.__turn_pool = list()
         self.head = Head()
-        self.head.rect.topleft = (0, 0)
+        self.head.rect.topleft = self.world.get_free_cell()
         self.add(self.head)
-        self.growth(3)
+        self.growth(self.world.length)
         
     @property
     def direction(self):
@@ -125,6 +124,9 @@ class Snake(Group):
     def growth(self, lenght=1):
         for each in range(lenght):
             tail = Tail()
+            surf = self.world.font.render(\
+                    self.world.word[0][len(self.sprites())-1], True, BLACK)
+            tail.image.blit(surf, (0, 0))
             self.add(tail)
             self.world.enemies.add(tail)
 
@@ -173,6 +175,12 @@ class Wall(Block):
         self.image.fill(BLACK)
 
 
+class Poison(Block):
+    def __init__(self, pos):
+        super().__init__(pos)
+        self.image.fill(BLUE)
+
+
 class Food(Block):
     def __init__(self, pos):
         super().__init__(pos)
@@ -190,9 +198,15 @@ class Tail(Chunk):
         super().__init__()
         self.image.fill(BLUE)
 
-    def put_char(self, char):
-        font = pygame.font.SysFont(None, 28)
-        surf = font.render(char, True, (0, 0, 0))
-        rect = surf.get_rect()
-        rect.topleft = (0, 0)
-        self.image.blit(surf, rect)
+
+
+def choose_word(filename):
+    try:
+        file = open(filename)
+        words = json.loads(file.read())
+        file.close()
+    except FileNotFoundError as e:
+        print("File not found by the name ", filename)
+        
+    word = random.choice(list(words.keys()))
+    return word, words[word]

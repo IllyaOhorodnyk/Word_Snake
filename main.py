@@ -5,6 +5,7 @@ import json
 import pdb
 
 import pygame
+from pygame.sprite import Sprite, GroupSingle, Group
 from pygame import (K_UP, K_DOWN, K_LEFT, K_SPACE,
                     K_RIGHT, QUIT, KEYDOWN, K_ESCAPE)
 
@@ -13,7 +14,6 @@ from modules.frame import World
 ###### CONSTANTS ######
 from modules.constants import (BLOCK_SIZE, DISPLAY_SIZE, RED,
                                GREEN, BLUE, BLACK, WHITE)
-
 
 
 def main():
