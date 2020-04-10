@@ -8,9 +8,10 @@ import sys
 import json
 from pygame.sprite import Sprite, Group, GroupSingle
 
-from .constants import DISPLAY_SIZE, BLOCK_SIZE, GREEN, RED, BLACK, BLUE
+from .constants import (DISPLAY_SIZE, BLOCK_SIZE,
+        GREEN, RED, BLACK, BLUE, ALPHABET)
 from pygame import (K_UP, K_DOWN, K_LEFT,
-                    K_RIGHT, QUIT, KEYDOWN)
+        K_RIGHT, QUIT, KEYDOWN)
 
 
 class World():
@@ -24,7 +25,7 @@ class World():
         self.word = choose_word("words.json")
         
         self.font = pygame.font.Font("miroslav.ttf", 28)
-        surf = self.font.render(self.word[1], True, BLACK)
+        surf = pygame.font.Font("miroslav.ttf", 14).render(self.word[1], True, BLACK)
         sprite = pygame.sprite.Sprite()
         sprite.image = surf
         sprite.rect = surf.get_rect()
@@ -44,17 +45,23 @@ class World():
         self.snake = self.groups[2]
 
         self.groups.append(pygame.sprite.GroupSingle(sprite))
+        self.enemies.init_poisons()
 
     def update(self):
         [group.update() for group in self.groups]
 
         if self.snake.head.rect.topleft == self.foods.food.rect.topleft:
             self.snake.growth()
-            self.foods.repoint()
-        
+            if len(self.snake) != len(self.word[0])+1:
+                self.foods.repoint()
+            else:
+                self.foods.food.rect.topleft = (-100, -100)
+                print("Вигранно!\nПитання {} Відповідь {}".format(self.word[1], self.word[0]))
+                sys.exit(0)
+
         if self.snake.head.rect.topleft in \
                 [each.rect.topleft for each in self.enemies.sprites()]:
-            print("Game Over!")
+            print("Програнно!")
             sys.exit(0)
 
     def draw(self, screen):
@@ -96,8 +103,15 @@ class Enemies(Group):
             self.add(Wall((i, DISPLAY_SIZE[0]-BLOCK_SIZE[0])))
             self.add(Wall((DISPLAY_SIZE[1]-BLOCK_SIZE[1], i)))
 
+    def init_poisons(self):
+        available = list(ALPHABET - set(self.world.word[0]))
         for i in range(self.world.length):
-            self.add(Poison(self.world.get_free_cell()))
+            poison = Poison(self.world.get_free_cell())
+            char = random.choice(available)
+            surf = self.world.font.render(char, True, BLACK)
+            poison.image.blit(surf, (0, 0))
+            poison.rect.topleft = self.world.get_free_cell()
+            self.add(poison)
 
 class Snake(Group):
     def __init__(self, world):
@@ -178,7 +192,7 @@ class Wall(Block):
 class Poison(Block):
     def __init__(self, pos):
         super().__init__(pos)
-        self.image.fill(BLUE)
+        self.image.fill(GREEN)
 
 
 class Food(Block):
@@ -199,7 +213,6 @@ class Tail(Chunk):
         self.image.fill(BLUE)
 
 
-
 def choose_word(filename):
     try:
         file = open(filename)
@@ -209,4 +222,5 @@ def choose_word(filename):
         print("File not found by the name ", filename)
         
     word = random.choice(list(words.keys()))
-    return word, words[word]
+    answer = words[word]
+    return word, answer

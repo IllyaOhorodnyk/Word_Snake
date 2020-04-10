@@ -18,8 +18,8 @@ from modules.constants import (BLOCK_SIZE, DISPLAY_SIZE, RED,
 
 def main():
     pygame.init()
-    #screen = pygame.display.set_mode(DISPLAY_SIZE, flags=pygame.FULLSCREEN)
-    screen = pygame.display.set_mode(DISPLAY_SIZE)
+    screen = pygame.display.set_mode(DISPLAY_SIZE, flags=pygame.FULLSCREEN)
+    pygame.mouse.set_visible(0)
     clock = pygame.time.Clock()
     world = World()
     
@@ -37,7 +37,8 @@ def main():
             elif e.type == KEYDOWN and e.key == K_RIGHT:
                 world.snake.turn(e.key)
             elif e.type == KEYDOWN and e.key == K_SPACE:
-                pdb.set_trace()
+                pass
+                #pdb.set_trace()
 
         clock.tick(4)
         screen.fill(WHITE)
